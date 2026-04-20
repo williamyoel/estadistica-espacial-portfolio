@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portafolio — Estadística Espacial | William Yoel Incacutipa</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+  <header class="header">
+    <div class="header__inner">
+      <div class="header__top">
+        <div class="logo-area">
+          <div class="logo-badge">UNA</div>
+          <div class="logo-text-block">
+            <div class="logo-title">Universidad Nacional del Altiplano — Puno</div>
+            <div class="logo-sub">Facultad de Ingeniería Estadística e Informática</div>
+          </div>
+        </div>
+        <div class="semester-badge">SEM 2026-I</div>
+      </div>
+
+      <div class="header__main">
+        <div class="title-block">
+          <h1>Estadística <span class="gold">Espacial</span></h1>
+          <p class="subtitle-line">Compendio de análisis avanzado · Procesos puntuales · Autocorrelación · Geoestadística</p>
+        </div>
+        <div class="meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Alumno</span>
+            <span class="meta-value">William Yoel Incacutipa Incacutipa</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Código</span>
+            <span class="meta-value highlight">215341</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Carrera</span>
+            <span class="meta-value">Ing. Estadística e Informática</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Docente</span>
+            <span class="meta-value">Fred Torres Cruz</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════ PROGRESS ══════════════════════════════ -->
+  <div class="progress-strip">
+    <span class="progress-label">Progreso del curso</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="pbar"></div>
+    </div>
+    <span class="progress-value" id="pval">0%</span>
+  </div>
+
+  <!-- ═══════════════════════════════ NAV TABS ══════════════════════════════ -->
+  <nav class="nav-tabs" role="navigation" aria-label="Filtrar unidades">
+    <button class="nav-tab active" onclick="filterUnit('all', this)">
+      Todo <span class="nav-count" id="count-all">6</span>
+    </button>
+    <button class="nav-tab" onclick="filterUnit(1, this)">
+      Unidad I <span class="nav-count">3</span>
+    </button>
+    <button class="nav-tab" onclick="filterUnit(2, this)">
+      Unidad II <span class="nav-count">3</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════ MAIN CONTENT ══════════════════════════ -->
+  <main class="content" id="main-content">
+
+    <!-- ─── UNIDAD I ─── -->
+    <section class="unit-block" data-unit="1">
+      <div class="unit-header">
+        <div class="unit-number">I</div>
+        <div>
+          <div class="unit-label">Unidad</div>
+          <div class="unit-name">Fundamentos del Análisis Espacial</div>
+        </div>
+      </div>
+
+      <div class="tasks-list">
+
+        <!-- Tarea 1 -->
+        <article class="task-card" tabindex="0" onclick="toggleCard(this)" onkeydown="handleKey(event,this)">
+          <div class="task-inner">
+            <div class="task-number-col"><span class="task-num">1</span></div>
+            <div class="task-main">
+              <div class="task-info">
+                <div class="task-title">Posicionamiento de Información</div>
+                <div class="task-desc">Lectura de datos geográficos, sistemas de coordenadas y visualización inicial con R.</div>
+                <span class="task-status status-enviado">
+                  <span class="status-dot"></span>Enviado
+                </span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <a class="btn-action btn-primary" href="tareas/tarea1/informe.pdf" target="_blank" onclick="event.stopPropagation()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/></svg>
+                Ver Informe
+              </a>
+              <a class="btn-action btn-secondary" href="tareas/tarea1/codigo.R" target="_blank" onclick="event.stopPropagation()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                Código R
+              </a>
+            </div>
+          </div>
+          <div class="task-detail">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Fecha de entrega</div>
+                <div class="detail-val">12 Mar 2026</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Calificación</div>
+                <div class="detail-val success">18 / 20</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Herramientas</div>
+                <div class="detail-val">R, sf, ggplot2</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Tarea 2 -->
+        <article class="task-card" tabindex="0" onclick="toggleCard(this)" onkeydown="handleKey(event,this)">
+          <div class="task-inner">
+            <div class="task-number-col"><span class="task-num">2</span></div>
+            <div class="task-main">
+              <div class="task-info">
+                <div class="task-title">Análisis Exploratorio Espacial</div>
+                <div class="task-desc">Estadísticas descriptivas espaciales y visualización temática de variables geográficas.</div>
+                <span class="task-status status-enviado">
+                  <span class="status-dot"></span>Enviado
+                </span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <a class="btn-action btn-primary" href="tareas/tarea2/informe.pdf" target="_blank" onclick="event.stopPropagation()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/></svg>
+                Ver Informe
+              </a>
+              <a class="btn-action btn-secondary" href="tareas/tarea2/codigo.R" target="_blank" onclick="event.stopPropagation()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                Código R
+              </a>
+            </div>
+          </div>
+          <div class="task-detail">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Fecha de entrega</div>
+                <div class="detail-val">26 Mar 2026</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Calificación</div>
+                <div class="detail-val success">17 / 20</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Herramientas</div>
+                <div class="detail-val">R, spdep, tmap</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Tarea 3 -->
+        <article class="task-card pending-card" tabindex="0" onclick="toggleCard(this)" onkeydown="handleKey(event,this)">
+          <div class="task-inner">
+            <div class="task-number-col"><span class="task-num">3</span></div>
+            <div class="task-main">
+              <div class="task-info">
+                <div class="task-title">Autocorrelación Espacial</div>
+                <div class="task-desc">Cálculo del índice de Moran e interpretación de patrones de dependencia espacial.</div>
+                <span class="task-status status-pendiente">
+                  <span class="status-dot pulse"></span>Pendiente
+                </span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <span class="btn-action btn-locked">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                Próximamente
+              </span>
+            </div>
+          </div>
+          <div class="task-detail">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Fecha de entrega</div>
+                <div class="detail-val">10 Abr 2026</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Estado</div>
+                <div class="detail-val pending">En progreso</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Herramientas</div>
+                <div class="detail-val">R, spdep</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ─── UNIDAD II ─── -->
+    <section class="unit-block unit-separator" data-unit="2">
+      <div class="unit-header">
+        <div class="unit-number">II</div>
+        <div>
+          <div class="unit-label">Unidad</div>
+          <div class="unit-name">Modelos Geoestadísticos Avanzados</div>
+        </div>
+      </div>
+
+      <div class="tasks-list">
+
+        <!-- Tarea 4 -->
+        <article class="task-card" tabindex="0" onclick="toggleCard(this)" onkeydown="handleKey(event,this)">
+          <div class="task-inner">
+            <div class="task-number-col"><span class="task-num">4</span></div>
+            <div class="task-main">
+              <div class="task-info">
+                <div class="task-title">Kriging y Variogramas</div>
+                <div class="task-desc">Estimación espacial mediante kriging ordinario y ajuste de variogramas teóricos.</div>
+                <span class="task-status status-revision">
+                  <span class="status-dot"></span>En revisión
+                </span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <a class="btn-action btn-primary" href="tareas/tarea4/informe.pdf" target="_blank" onclick="event.stopPropagation()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/></svg>
+                Ver Informe
+              </a>
+              <a class="btn-action btn-secondary" href="tareas/tarea4/codigo.R" target="_blank" onclick="event.stopPropagation()">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                Código R
+              </a>
+            </div>
+          </div>
+          <div class="task-detail">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Fecha de entrega</div>
+                <div class="detail-val">28 Abr 2026</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Calificación</div>
+                <div class="detail-val teal">Pendiente revisión</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Herramientas</div>
+                <div class="detail-val">R, gstat, sp</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Tarea 5 -->
+        <article class="task-card pending-card" tabindex="0" onclick="toggleCard(this)" onkeydown="handleKey(event,this)">
+          <div class="task-inner">
+            <div class="task-number-col"><span class="task-num">5</span></div>
+            <div class="task-main">
+              <div class="task-info">
+                <div class="task-title">Procesos Puntuales</div>
+                <div class="task-desc">Análisis de patrones de puntos, densidad kernel y pruebas de aleatoriedad espacial completa.</div>
+                <span class="task-status status-pendiente">
+                  <span class="status-dot pulse"></span>Pendiente
+                </span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <span class="btn-action btn-locked">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                Próximamente
+              </span>
+            </div>
+          </div>
+          <div class="task-detail">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Fecha de entrega</div>
+                <div class="detail-val">15 May 2026</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Estado</div>
+                <div class="detail-val pending">No iniciado</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Herramientas</div>
+                <div class="detail-val">R, spatstat</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Tarea 6 -->
+        <article class="task-card pending-card" tabindex="0" onclick="toggleCard(this)" onkeydown="handleKey(event,this)">
+          <div class="task-inner">
+            <div class="task-number-col"><span class="task-num">6</span></div>
+            <div class="task-main">
+              <div class="task-info">
+                <div class="task-title">Proyecto Final Integrador</div>
+                <div class="task-desc">Aplicación integral de métodos geoestadísticos a un caso de estudio regional del altiplano peruano.</div>
+                <span class="task-status status-pendiente">
+                  <span class="status-dot pulse"></span>Pendiente
+                </span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <span class="btn-action btn-locked">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                Próximamente
+              </span>
+            </div>
+          </div>
+          <div class="task-detail">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Fecha de entrega</div>
+                <div class="detail-val">30 Jun 2026</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Peso en nota</div>
+                <div class="detail-val">40% del final</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Herramientas</div>
+                <div class="detail-val">R, QGIS, LaTeX</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════ FOOTER STATS ══════════════════════════ -->
+  <footer class="stats-strip">
+    <div class="stat-block">
+      <div class="stat-label">Total tareas</div>
+      <div class="stat-num">6</div>
+      <div class="stat-caption">en 2 unidades</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">Enviadas</div>
+      <div class="stat-num gold">2</div>
+      <div class="stat-caption">calificadas</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">En proceso</div>
+      <div class="stat-num teal">2</div>
+      <div class="stat-caption">revisión + progreso</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">Promedio</div>
+      <div class="stat-num gold">17.5</div>
+      <div class="stat-caption">sobre 20</div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
