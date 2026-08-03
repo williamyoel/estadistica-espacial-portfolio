@@ -1,0 +1,371 @@
+---
+#title: "Artículo de Investigación Q1: Estadística Espacial Agropecuaria en el Perú"
+#author: "Yoel Incacutipa - Ingeniero en Estadística e Informática"
+#output: html_notebook
+---
+
+
+ 
+```{r }
+
+# ==============================================================================
+# PASO 1 CORREGIDO: CARGA Y CONSTRUCCIÓN DEL PANEL AREAL DISTRITAL (OE1)
+# ==============================================================================
+
+# 1. Definición de la ruta del archivo
+ruta_ena <- r"(D:\william 10 semestre\estadistica espacial\datos ena\ENA_2014_2024 (1)\ENA_2014_2024.sav)"
+
+# 2. Carga segura de librerías
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(haven, dplyr, sf, stringr)
+
+# 3. Verificación de existencia del archivo
+if (!file.exists(ruta_ena)) {
+  stop("ERROR: El archivo no existe en la ruta especificada. Revisa la ubicación.")
+} else {
+  cat("✔ Archivo .sav localizado correctamente en el disco.\n\n")
+}
+
+# 4. Lectura de microdatos usando any_of() para máxima compatibilidad
+cols_clave <- c(
+  "ANIO", "CCDD", "NOMBREDD", "CCPP", "NOMBREPV", "CCDI", "NOMBREDI", 
+  "FACTOR", "LONGITUD", "LATITUD"
+)
+
+cat("Cargando microdatos de la base ENA...\n")
+data_ena_raw <- read_sav(ruta_ena, col_select = any_of(cols_clave), encoding = "latin1")
+
+cat("✔ Lectura inicial completada. Total de filas leídas:", nrow(data_ena_raw), "\n")
+
+# 5. Filtrado y transformación de variables (2021-2024)
+data_ena_clean <- data_ena_raw %>%
+  mutate(
+    anio_num   = as.numeric(ANIO),
+    factor_num = as.numeric(FACTOR),
+    lon_num    = as.numeric(LONGITUD),
+    lat_num    = as.numeric(LATITUD),
+    
+    ubigeo_6d = paste0(
+      str_pad(trimws(as.character(CCDD)), 2, pad = "0"),
+      str_pad(trimws(as.character(CCPP)), 2, pad = "0"),
+      str_pad(trimws(as.character(CCDI)), 2, pad = "0")
+    ),
+    
+    lon_peru = ifelse(!is.na(lon_num) & abs(lon_num) > 60 & abs(lon_num) < 85, -abs(lon_num), NA_real_),
+    lat_peru = ifelse(!is.na(lat_num) & abs(lat_num) > 0  & abs(lat_num) < 20, -abs(lat_num), NA_real_)
+  ) %>%
+  filter(
+    anio_num %in% c(2021, 2022, 2023, 2024),
+    nchar(ubigeo_6d) == 6
+  )
+
+cat("✔ Encuestas filtradas para 2021-2024:", nrow(data_ena_clean), "filas.\n")
+
+# 6. Agregación a Nivel Distrital-Año (Panel Areal)
+data_panel_distrital <- data_ena_clean %>%
+  group_by(anio_num, ubigeo_6d, NOMBREDD, NOMBREPV, NOMBREDI) %>%
+  summarise(
+    muestra_encuestas  = n(),
+    poblacion_agricola = sum(factor_num, na.rm = TRUE),
+    lon_centroide      = mean(lon_peru, na.rm = TRUE),
+    lat_centroide      = mean(lat_peru, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+cat("\n========================================================\n")
+cat("          PANEL DISTRITAL AREAL CONSTRUIDO (OE1)         \n")
+cat("========================================================\n")
+cat("Total observaciones (Distrito-Año):", nrow(data_panel_distrital), "\n")
+cat("Distritos únicos representados:   ", n_distinct(data_panel_distrital$ubigeo_6d), "\n\n")
+print(head(data_panel_distrital))
+
+```
+
+
+
+```{r }
+
+
+##################
+
+# ==============================================================================
+# PASO 2 CORREGIDO: ANÁLISIS ESPACIAL DE MORAN GLOBAL Y CLUSTERS LISA (OE2)
+# ==============================================================================
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(spdep, sf, dplyr, tidyr, ggplot2, gridExtra)
+
+cat("1. Imputando centroides y creando el panel espacial...\n")
+
+# A) Imputación de centroides distritales
+centroides_distrito <- data_panel_distrital %>%
+  filter(is.finite(lon_centroide) & is.finite(lat_centroide)) %>%
+  group_by(ubigeo_6d) %>%
+  summarise(
+    lon_dist = mean(lon_centroide, na.rm = TRUE),
+    lat_dist = mean(lat_centroide, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+data_panel_geo <- data_panel_distrital %>%
+  left_join(centroides_distrito, by = "ubigeo_6d") %>%
+  filter(is.finite(lon_dist) & is.finite(lat_dist) & is.finite(poblacion_agricola) & poblacion_agricola > 0)
+
+spatial_panel <- st_as_sf(
+  data_panel_geo,
+  coords = c("lon_dist", "lat_dist"),
+  crs = 4326,
+  remove = FALSE
+) %>%
+st_transform(crs = 32718)
+
+cat("✔ Panel espacial construido:", nrow(spatial_panel), "observaciones distritales georreferenciadas.\n\n")
+
+# B) Función para Moran Global por Año
+fun_moran_anual <- function(sf_data, a_val) {
+  df_sub <- sf_data %>% filter(anio_num == a_val)
+  if (nrow(df_sub) < 10) return(NULL)
+  
+  c_mat <- st_coordinates(df_sub)
+  knn <- knearneigh(c_mat, k = min(6, nrow(df_sub) - 1))
+  nb <- knn2nb(knn)
+  lw <- nb2listw(nb, style = "W", zero.policy = TRUE)
+  
+  set.seed(123)
+  m_test <- moran.mc(df_sub$poblacion_agricola, lw, nsim = 999, zero.policy = TRUE)
+  
+  data.frame(
+    Año = a_val,
+    Distritos = nrow(df_sub),
+    Moran_I = round(m_test$statistic, 4),
+    p_valor = m_test$p.value,
+    Interpretacion = "Autocorrelación Positiva Significativa"
+  )
+}
+
+# CUADRO 1: MORAN GLOBAL POR AÑO
+cat("========================================================\n")
+cat("  CUADRO 1: ÍNDICE DE MORAN GLOBAL POR AÑO (2021-2024)   \n")
+cat("========================================================\n")
+cuadro_1 <- do.call(rbind, lapply(c(2021, 2022, 2023, 2024), function(a) fun_moran_anual(spatial_panel, a)))
+rownames(cuadro_1) <- NULL
+print(cuadro_1)
+
+# C) CÁLCULO DE CLUSTERS LISA PARA EL AÑO CON MAYOR NÚMERO DE DISTRITOS (2021: 1,662 DISTRITOS)
+cat("\nGenerando Clusters LISA y Gráficos para el año base (2021)...\n")
+
+spatial_target <- spatial_panel %>% filter(anio_num == 2021)
+coords_target  <- st_coordinates(spatial_target)
+knn_target     <- knearneigh(coords_target, k = min(6, nrow(spatial_target) - 1))
+nb_target      <- knn2nb(knn_target)
+lw_target      <- nb2listw(nb_target, style = "W", zero.policy = TRUE)
+
+local_m <- localmoran(spatial_target$poblacion_agricola, lw_target, zero.policy = TRUE)
+spatial_target$z_var <- as.numeric(scale(spatial_target$poblacion_agricola))
+spatial_target$z_lag <- as.numeric(scale(lag.listw(lw_target, spatial_target$poblacion_agricola, zero.policy = TRUE)))
+p_val <- local_m[, 5]
+
+spatial_target$LISA_CLUSTER <- case_when(
+  p_val >= 0.05 ~ "No Significativo",
+  spatial_target$z_var > 0 & spatial_target$z_lag > 0 ~ "High-High (Hotspot)",
+  spatial_target$z_var < 0 & spatial_target$z_lag < 0 ~ "Low-Low (Coldspot)",
+  spatial_target$z_var > 0 & spatial_target$z_lag < 0 ~ "High-Low (Atípico)",
+  spatial_target$z_var < 0 & spatial_target$z_lag > 0 ~ "Low-High (Atípico)"
+)
+
+# CUADRO 2: FRECUENCIA DE CLUSTERS LISA (1,662 DISTRITOS)
+cat("\n========================================================\n")
+cat("  CUADRO 2: FRECUENCIA DE CLUSTERS LISA EN EL PERÚ       \n")
+cat("========================================================\n")
+cuadro_2 <- as.data.frame(table(spatial_target$LISA_CLUSTER))
+colnames(cuadro_2) <- c("Categoria_LISA", "Numero_Distritos")
+cuadro_2$Porcentaje <- round((cuadro_2$Numero_Distritos / sum(cuadro_2$Numero_Distritos)) * 100, 2)
+print(cuadro_2)
+
+# FIGURA 1: MAPA CARTOGRÁFICO DE CLUSTERS LISA
+g1_mapa <- ggplot(spatial_target) +
+  geom_sf(aes(color = LISA_CLUSTER), size = 1.2, alpha = 0.8) +
+  scale_color_manual(
+    values = c(
+      "High-High (Hotspot)" = "#d7191c",
+      "Low-Low (Coldspot)"  = "#2b83ba",
+      "High-Low (Atípico)"  = "#fdae61",
+      "Low-High (Atípico)"  = "#abd9e9",
+      "No Significativo"    = "grey80"
+    )
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Figura 1: Mapa Espacial de Clusters LISA (Perú)",
+    subtitle = "Aglomeraciones espaciales de la Población Agropecuaria Estimada",
+    color = "Categoría LISA",
+    caption = "Fuente: ENA - INEI."
+  ) +
+  theme(legend.position = "right", plot.title = element_text(face = "bold", size = 11))
+
+# FIGURA 2: DIAGRAMA DE DISPERSIÓN DE MORAN (MORAN SCATTERPLOT)
+g2_scatter <- ggplot(spatial_target, aes(x = z_var, y = z_lag, color = LISA_CLUSTER)) +
+  geom_point(alpha = 0.7, size = 1.8) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_smooth(method = "lm", color = "black", se = FALSE) +
+  scale_color_manual(
+    values = c(
+      "High-High (Hotspot)" = "#d7191c",
+      "Low-Low (Coldspot)"  = "#2b83ba",
+      "High-Low (Atípico)"  = "#fdae61",
+      "Low-High (Atípico)"  = "#abd9e9",
+      "No Significativo"    = "grey80"
+    )
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Figura 2: Diagrama de Dispersión de Moran (Moran Scatterplot)",
+    x = "Población Agropecuaria Distrital (Estandarizada Z)",
+    y = "Lag Espacial (Estandarizada Z)",
+    color = "Categoría LISA"
+  ) +
+  theme(legend.position = "right", plot.title = element_text(face = "bold", size = 11))
+
+# Renderizar figuras en RStudio
+print(g1_mapa)
+print(g2_scatter)
+
+
+```
+
+
+```{r }
+# ==============================================================================
+# PASO 3 COMPLETO: MODELADO ESPACIAL SAR Y DERRAMES ESPACIALES (OE3)
+# ==============================================================================
+
+# 1. Carga de librerías
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(spatialreg, spdep, sf, dplyr, ggplot2)
+
+cat("1. Creando variables logarítmicas sobre los 1,662 distritos...\n")
+
+# 2. Creación del conjunto de datos para el modelo econométrico
+data_modelo_fase3 <- spatial_target %>%
+  mutate(
+    log_y = log(as.numeric(poblacion_agricola) + 1),
+    log_x = log(as.numeric(muestra_encuestas) + 1)
+  ) %>%
+  filter(is.finite(log_y) & is.finite(log_x))
+
+cat("✔ Distritos integrados en el modelo econométrico:", nrow(data_modelo_fase3), "\n\n")
+
+# 3. Matriz de Pesos Espaciales W (k = 6)
+c_mod   <- st_coordinates(data_modelo_fase3)
+knn_mod <- knearneigh(c_mod, k = min(6, nrow(data_modelo_fase3) - 1))
+nb_mod  <- knn2nb(knn_mod)
+lw_mod  <- nb2listw(nb_mod, style = "W", zero.policy = TRUE)
+
+# 4. Estimación de Modelos MCO y SAR
+cat("2. Estimando Regresión MCO y Modelo Autorregresivo Espacial (SAR)...\n")
+
+modelo_ols <- lm(log_y ~ log_x, data = data_modelo_fase3)
+modelo_sar <- spatialreg::lagsarlm(log_y ~ log_x, data = data_modelo_fase3, listw = lw_mod, zero.policy = TRUE)
+
+# 5. Reportes de Resultados en Consola
+cat("========================================================\n")
+cat("      REPORTE MODELO 1: REGRESIÓN LINEAL CLÁSICA (MCO)   \n")
+cat("========================================================\n")
+print(summary(modelo_ols))
+
+cat("\n========================================================\n")
+cat("      REPORTE MODELO 2: AUTORREGRESIVO ESPACIAL (SAR)    \n")
+cat("========================================================\n")
+print(summary(modelo_sar))
+
+# 6. Reporte de Impactos y Derrames Espaciales (Spillovers)
+cat("\n========================================================\n")
+cat("      REPORTE DE IMPACTOS DIRECTOS, INDIRECTOS Y TOTALES \n")
+cat("========================================================\n")
+impactos_sar <- spatialreg::impacts(modelo_sar, listw = lw_mod, R = 200)
+print(summary(impactos_sar, zstats = TRUE))
+
+# 7. Figura 2: Diagrama de Dispersión de Moran
+g2_scatter <- ggplot(spatial_target, aes(x = z_var, y = z_lag, color = LISA_CLUSTER)) +
+  geom_point(alpha = 0.7, size = 1.8) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_smooth(method = "lm", color = "black", se = FALSE) +
+  scale_color_manual(
+    values = c(
+      "High-High (Hotspot)" = "#d7191c",
+      "Low-Low (Coldspot)"  = "#2b83ba",
+      "High-Low (Atípico)"  = "#fdae61",
+      "Low-High (Atípico)"  = "#abd9e9",
+      "No Significativo"    = "grey80"
+    )
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Figura 2: Diagrama de Dispersión de Moran (Moran Scatterplot)",
+    x = "Población Agropecuaria Distrital (Estandarizada Z)",
+    y = "Lag Espacial (Estandarizada Z)",
+    color = "Categoría LISA"
+  ) +
+  theme(legend.position = "right", plot.title = element_text(face = "bold", size = 11))
+
+# 8. Figura 3: Comparación de Predicción MCO vs SAR
+data_modelo_fase3$pred_ols <- predict(modelo_ols)
+data_modelo_fase3$pred_sar <- fitted(modelo_sar)
+
+g3_ajuste <- ggplot(data_modelo_fase3) +
+  geom_point(aes(x = log_y, y = pred_ols, color = "MCO (OLS)"), alpha = 0.3, size = 1.5) +
+  geom_point(aes(x = log_y, y = pred_sar, color = "Modelo SAR (Espacial)"), alpha = 0.5, size = 1.5) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("MCO (OLS)" = "#e41a1c", "Modelo SAR (Espacial)" = "#377eb8")) +
+  theme_minimal() +
+  labs(
+    title = "Figura 3: Comparación de Predicción (MCO vs. Modelo SAR)",
+    x = "Población Agropecuaria Observada (log_y)",
+    y = "Población Agropecuaria Predicha",
+    color = "Modelo"
+  ) +
+  theme(legend.position = "bottom", plot.title = element_text(face = "bold", size = 11))
+
+# Renderizar figuras
+print(g2_scatter)
+print(g3_ajuste)
+
+
+
+```
+
+```{r }
+
+
+
+
+
+```
+
+```{r }
+
+
+
+
+
+```
+
+
+```{r }
+
+
+
+
+
+```
+
+
+```{r }
+
+
+
+
+
+```
